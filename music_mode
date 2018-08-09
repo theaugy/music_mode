@@ -1,0 +1,103 @@
+export MUSIC_MODE_FORMAT='path' # used whenever returning tracks
+export MUSIC_MODE_DATABASE=/tmp/blb
+export MUSIC_MODE_TAGS=/m/meta/tags.sqlite3
+export MUSIC_MODE_DATABASE_SOURCE=/m/beetslibrary/beetslibrary.blb
+export MUSIC_MODE_SQL_INIT=~/.music_mode_sql_init 
+function mm_refresh_tags {
+    sqlite3 "$MUSIC_MODE_TAGS" .dump | sqlite3 "$MUSIC_MODE_DATABASE"
+}
+
+function mm_refresh_database {
+    cp "$MUSIC_MODE_DATABASE_SOURCE" "$MUSIC_MODE_DATABASE"
+    mm_refresh_tags
+}
+
+function _mm_output {
+
+    cat > /tmp/mm.beets_ids
+
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select $MUSIC_MODE_FORMAT from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' ))" \
+    | sed -e 's/\s\+$//'
+}
+
+function mm_tags {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select (select count(*) from tagged where tag_id = tags.id),name,id from tags"
+}
+
+function mm_all_tagged {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where id in (select beets_id from tagged)" \
+        | _mm_output
+}
+
+function mm_random_tagged {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where id in (select beets_id from tagged) order by random() limit $1" \
+        | _mm_output
+}
+
+function mm_tagged {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where id in (select beets_id from tagged where tag_id = (select id from tags where name = '$1'))" \
+        | _mm_output
+}
+
+function mm_artist {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where artist like '$1'" \
+        | _mm_output
+}
+
+function mm_title {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where title like '$1'" \
+        | _mm_output
+}
+
+function mm_search {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where title like '%$1%'or artist like '%$1%' or album like '%$1%'" \
+        | _mm_output
+}
+
+function mm_recent {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items where id in (select id from items order by added desc limit $1) order by album,track" \
+        | _mm_output
+}
+
+function mm_random {
+    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+        "select id from items order by random() limit $1" \
+        | _mm_output
+}
+
+function mm_format_table {
+    MUSIC_MODE_FORMAT=artist,track,title,album,path
+    mm_widths 20 3 30 30 100
+}
+
+function mm_format_playlist {
+    MUSIC_MODE_FORMAT=path
+    mm_widths '220'
+}
+
+function mm_cmus_enqueue {
+    sqlite3 "$MUSIC_MODE_DATABASE" \
+        "select path from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' ))" > /tmp/mm.m3u
+    cmus-remote /tmp/mm.m3u
+}
+
+echo '
+.mode column
+.width 1000
+' > "$MUSIC_MODE_SQL_INIT"
+
+function mm_widths {
+    sed -i -e "s/^\.width.*/.width $*/" "$MUSIC_MODE_SQL_INIT"
+}
+
+env | grep MUSIC_MODE
+echo "Ready to rock. Everything is prefixed with mm_"
