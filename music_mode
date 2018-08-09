@@ -58,7 +58,7 @@ function mm_title {
 
 function mm_search {
     sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
-        "select id from items where title like '%$1%'or artist like '%$1%' or album like '%$1%'" \
+        "select id from items where title like '%$1%'or artist like '%$1%' or album like '%$1%' or genre like '%$1%'" \
         | _mm_output
 }
 
