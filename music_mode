@@ -17,7 +17,7 @@ function _mm_output {
     cat > /tmp/mm.beets_ids
 
     sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
-        "select $MUSIC_MODE_FORMAT from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' ))" \
+        "select $MUSIC_MODE_FORMAT from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,,/,/g' -e 's/,$//'  ))" \
     | sed -e 's/\s\+$//'
 }
 
@@ -86,7 +86,7 @@ function mm_format_playlist {
 
 function mm_cmus_enqueue {
     sqlite3 "$MUSIC_MODE_DATABASE" \
-        "select path from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' ))" > /tmp/mm.m3u
+        "select path from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' -e 's/,,/,/g' ))" > /tmp/mm.m3u
     cmus-remote /tmp/mm.m3u
 }
 
