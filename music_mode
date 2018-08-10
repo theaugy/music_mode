@@ -22,54 +22,54 @@ function _mm_output {
 }
 
 function mm_tags {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select (select count(*) from tagged where tag_id = tags.id),name,id from tags"
 }
 
 function mm_all_tagged {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where id in (select beets_id from tagged)" \
         | _mm_output
 }
 
 function mm_random_tagged {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where id in (select beets_id from tagged) order by random() limit $1" \
         | _mm_output
 }
 
 function mm_tagged {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where id in (select beets_id from tagged where tag_id = (select id from tags where name = '$1'))" \
         | _mm_output
 }
 
 function mm_artist {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where artist like '$1'" \
         | _mm_output
 }
 
 function mm_title {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where title like '$1'" \
         | _mm_output
 }
 
 function mm_search {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where title like '%$1%'or artist like '%$1%' or album like '%$1%' or genre like '%$1%'" \
         | _mm_output
 }
 
 function mm_recent {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items where id in (select id from items order by added desc limit $1) order by album,track" \
         | _mm_output
 }
 
 function mm_random {
-    sqlite3 "$MUSIC_MODE_DATABASE" -init "$MUSIC_MODE_SQL_INIT" \
+    sqlite3 "$MUSIC_MODE_DATABASE" \
         "select id from items order by random() limit $1" \
         | _mm_output
 }
