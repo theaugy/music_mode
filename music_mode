@@ -86,6 +86,11 @@ function mm_format_playlist {
     mm_widths '220'
 }
 
+function mm_format_everything {
+    MUSIC_MODE_FORMAT=*
+    everything_sql_init
+}
+
 function mm_cmus_enqueue {
     sqlite3 "$MUSIC_MODE_DATABASE" \
         "select path from items where id in ($(cat /tmp/mm.beets_ids | tr '\n' ',' | sed -e 's/,$//' -e 's/,,/,/g' ))" > /tmp/mm.m3u
@@ -97,6 +102,10 @@ function default_sql_init {
 .mode column
 .width 1000
     ' > "$MUSIC_MODE_SQL_INIT"
+}
+
+function everything_sql_init {
+    echo '.mode line' > "$MUSIC_MODE_SQL_INIT"
 }
 
 function mm_widths {
