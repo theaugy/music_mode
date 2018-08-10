@@ -76,11 +76,13 @@ function mm_random {
 
 function mm_format_table {
     MUSIC_MODE_FORMAT=artist,track,title,album,path
+    default_sql_init
     mm_widths 20 3 30 30 100
 }
 
 function mm_format_playlist {
     MUSIC_MODE_FORMAT=path
+    default_sql_init
     mm_widths '220'
 }
 
@@ -90,14 +92,17 @@ function mm_cmus_enqueue {
     cmus-remote /tmp/mm.m3u
 }
 
-echo '
+function default_sql_init {
+    echo '
 .mode column
 .width 1000
-' > "$MUSIC_MODE_SQL_INIT"
+    ' > "$MUSIC_MODE_SQL_INIT"
+}
 
 function mm_widths {
     sed -i -e "s/^\.width.*/.width $*/" "$MUSIC_MODE_SQL_INIT"
 }
 
+default_sql_init
 env | grep MUSIC_MODE
 echo "Ready to rock. Everything is prefixed with mm_"
