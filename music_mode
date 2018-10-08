@@ -46,13 +46,19 @@ function mm_tagged {
 
 function mm_artist {
     sqlite3 "$MUSIC_MODE_DATABASE" \
-        "select id from items where artist like '$1'" \
+        "select id from items where artist like '%$1%'" \
+        | _mm_output
+}
+
+function mm_album {
+    sqlite3 "$MUSIC_MODE_DATABASE" \
+        "select id from items where album like '%$1%'" \
         | _mm_output
 }
 
 function mm_title {
     sqlite3 "$MUSIC_MODE_DATABASE" \
-        "select id from items where title like '$1'" \
+        "select id from items where title like '%$1%'" \
         | _mm_output
 }
 
