@@ -25,7 +25,7 @@ This is known to include CDJs (turn off autocue), Serato, "other" brand CDJs, Tr
 
 - sox
 - ffmpeg
-- tapbpm
+- [tapbpm](https://github.com/theaugy/tapbpm)
 
 # Configuration
 
