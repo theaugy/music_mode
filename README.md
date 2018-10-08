@@ -1,103 +1,29 @@
 # Introduction
 
-`music_mode` is a set of bash functions that prepare music for DJ'ing.
-A input file (anything that can be read by ffmpeg) is converted to a wav file.
-That wav file is split into pieces.
-The bpm of the wav file is established (tap tempo or specified).
-The pieces are copied to any number of target directories.
+`music_mode` is set of bash functions that make it possible to query my beets database and enqueue music to cmus.
 
-# Intended Use Case
+Part of the motivation for `music_mode` is that beets is horrendously slow with larger libraries, and after some brief experimentation is became clear that the python wrapping is the main reason. It's much faster to run queries via `sqlite3`. They are essentially instant with `music_mode`, while `beet` often takes double-digit seconds.
 
-Over many years of DJ'ing, a hard learned lesson is that there is very little you can rely on with respect to any club DJ setup.
-You cannot expect CDJs that support rekordbox. You cannot expect CDJs with hot cue buttons or particular looping features. You cannot expect that the link jacks will work.
-Hell, sometimes they aren't even Pioneers. Or it's only Serato.
+I also have a separate tags database that uses the `beets_id` field to associate tags with tracks. This script combines both databases into a temporary sqlite database (via `mm_refresh_database`) to allow querying by tag.
 
-Having a system for organizing, prepping, and performing that is completely agnostic of any performance technology, while maintaining the most basic features a DJ needs like BPM information, cue points, and library organization, is the problem that `music_mode` was intended to solve.
+## Configuration
 
-`music_mode` will work with any performance setup that supports:
+The paths at the top of `music_mode` are highly specific to my installation. In theory, anyone with a beets database could find this useful. The tags schema is extremely simple and could be mimicked if that feature were desired. And the cmus integration should Just Work™.
 
-- USB media (FAT file system)
-- Gapless playback
+## Usage
 
-This is known to include CDJs (turn off autocue), Serato, "other" brand CDJs, Traktor and Mixxx and probably any other "in the box" DJ performance software.
+Usually I start with `mm_refresh_database`.
 
-# Prerequisites
+Use `mm_search`, `mm_title`, `mm_random`, `mm_tagged`, etc. to query the library. By default, the path to the files are printed for each match.
 
-- sox
-- ffmpeg
-- [tapbpm](https://github.com/theaugy/tapbpm)
+The output format can be changed to:
 
-# Configuration
+- `mm_format_table`: table with artist, track, title, album, path columns. It is possible to adjust column widths with `mm_widths 10 20 30 40 50`, where the width of each column is 10 chars, 20 chars, 30 chars, etc.
+- `mm_format_playlist`: default. just prints path (suitable for `> playlist.m3u`)
+- `mm_format_everything`: prints every single datum for the track, one per row. This is a *ton* of data, and you probably don't want this unless you're searching for a single track.
 
-`music_mode` will copy the prepared tracks to multiple target directories. I will plug in both of my performance USB sticks, mount them at `/mnt/rb3` and `/mnt/rb4`, and ensure that `cdj_target_dir` is `/mnt/rb3,/mnt/rb4`.
-To change these, find the line near the top of the `music_mode` file and update the `cdj_target_dir=` line to point at the directory or directories you want. Comma-separate multiple directories.
+The results of the last query are always saved. You can use `mm_cmus_enqueue` to add the results of the last query to cmus.
 
-# Workflow
+## Not-Usage
 
-This is intended to be run from a bash shell. For macOS, Linux and similar operating systems, this is easy. Windows users should consider Windows Subsystem for Linux.
-
-First, put your shell into music mode:
-
-```
-$ source path/to/music_mode/music_mode
-```
-
-Load a track (called `some_song.mp3` in this case)
-
-```
-$ cdj_track music/some_song.mp3
-```
-
-Set the bpm (`120` in this case):
-```
-$ cdj_bpm 120
-```
-
-Find your cue points by scrubbing to a point in the song (`28` seconds in this example):
-
-```
-$ cdj_scrub 28
-```
-
-This will play 1 second of the song starting at the offset. If you're off by a little bit, you can nudge it forward or backward by changing the offset. You can use decimal places to get it exactly right (you rarely need more than the first decimal place):
-
-```
-$ cdj_scrub 28.14
-```
-
-If you need to hear more than 1 second of context, pass the number of seconds to play as the second argument (we'll listen to `5` seconds to be sure we got it right):
-
-```
-$ cdj_scrub 28.14 5
-```
-
-
-When it sounds right, add a split:
-
-```
-$ cdj_split
-```
-
-You can scrub anywhere else and add another split. You can add any number of splits. Don't worry about the order; when you finalize the track, your splits will always be created in chronological order.
-
-To hear all the splits you've created so far:
-
-```
-$ cdj_split_preview
-```
-
-When you're done with the track:
-
-```
-$ cdj_done
-```
-
-`cdj_done` will break the track into pieces and copy it to the target directories. So if your target directory is `/mnt/cdj_usb_key`, and you created splits at `28` and `64`, and the bpm is `120`, then `cdj_done` will generate the following files:
-
-```
-/mnt/cdj_usb_key/120.00_some_song [000].wav
-/mnt/cdj_usb_key/120.00_some_song [028].wav
-/mnt/cdj_usb_key/120.00_some_song [120].wav
-```
-
-Each piece starts at the exact offset where you put its split.
+`music_mode` is strictly read-only. When I make updates to my beets library, I do it via `beet`. This is still slow, sometimes painfully slow, but since it doesn't happen very often (and I have that automated anyway), I don't have much incentive to run the risk of corrupting my music database to support writing.
